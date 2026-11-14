@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Gastos · Control de Gastos{% endblock %}
+{% block content %}
+<h1>Registro de gastos</h1>
+
+<section class="card">
+  <h2>Nuevo gasto</h2>
+  <form method="post" action="{{ url_for('gasto_nuevo') }}" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div>
+      <label for="fecha">Fecha</label>
+      <input id="fecha" name="fecha" type="date" value="{{ hoy }}" required>
+    </div>
+    <div class="grow">
+      <label for="descripcion">Descripción</label>
+      <input id="descripcion" name="descripcion" type="text" maxlength="120" placeholder="Ej. Almuerzo, transporte, útiles..." required>
+    </div>
+    <div>
+      <label for="monto">Monto (S/)</label>
+      <input id="monto" name="monto" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+    </div>
+    <div class="align-end">
+      <button class="btn btn-primary" type="submit">Registrar</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Historial</h2>
+    <form method="get" class="filters">
+      <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
+      <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+      <button class="btn" type="submit">Filtrar</button>
+      {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('gastos') }}">Limpiar</a>{% endif %}
+    </form>
+  </div>
+
+  {% if gastos %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fecha</th><th>Descripción</th><th class="num">Monto</th><th class="actions">Acciones</th></tr></thead>
+      <tbody>
+        {% for g in gastos %}
+        <tr>
+          <td>{{ g.fecha|fecha_es }}</td>
+          <td>{{ g.descripcion }}</td>
+          <td class="num">{{ g.monto|moneda }}</td>
+          <td class="actions">
+            <a class="btn btn-sm" href="{{ url_for('gasto_editar', gasto_id=g.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('gasto_eliminar', gasto_id=g.id) }}" class="inline"
+                  onsubmit="return confirm('¿Eliminar este gasto?');">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-danger" type="submit">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="2">Total ({{ gastos|length }} registros)</td><td class="num">{{ total|moneda }}</td><td></td></tr></tfoot>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No hay gastos registrados en este periodo.</p>
+  {% endif %}
+</section>
+{% endblock %}

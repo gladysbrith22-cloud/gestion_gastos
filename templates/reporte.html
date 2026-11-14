@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Reporte · Control de Gastos{% endblock %}
+{% block content %}
+<div class="report-head">
+  <div>
+    <h1>Reporte de gastos</h1>
+    <p class="muted">
+      Periodo:
+      {{ (desde|fecha_es) if desde else 'inicio' }} — {{ (hasta|fecha_es) if hasta else 'hoy' }}
+      · Generado el {{ generado }}
+    </p>
+  </div>
+  <div class="no-print btn-row">
+    <a class="btn" href="{{ url_for('exportar_csv', desde=desde, hasta=hasta) }}">⬇ Exportar CSV</a>
+    <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir / PDF</button>
+  </div>
+</div>
+
+<section class="card no-print">
+  <form method="get" class="filters">
+    <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
+    <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+    <button class="btn" type="submit">Aplicar</button>
+    {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('reporte') }}">Limpiar</a>{% endif %}
+  </form>
+</section>
+
+<section class="kpis">
+  <div class="kpi"><span>Total gastado</span><strong>{{ resumen.total|moneda }}</strong></div>
+  <div class="kpi"><span>Nº de gastos</span><strong>{{ resumen.n }}</strong></div>
+  <div class="kpi"><span>Promedio</span><strong>{{ resumen.promedio|moneda }}</strong></div>
+  <div class="kpi"><span>Gasto máximo</span><strong>{{ resumen.maximo|moneda }}</strong></div>
+</section>
+
+{% if resumen.n %}
+<div class="two-col">
+  <section class="card">
+    <h2>Gasto por mes</h2>
+    <div class="bars">
+      {% for m in por_mes %}
+      <div class="bar-row">
+        <span class="bar-label">{{ m.mes }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ (m.total / max_mes * 100)|round(1) }}%"></div></div>
+        <span class="bar-value">{{ m.total|moneda }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Top 5 gastos más altos</h2>
+    <table>
+      <thead><tr><th>Fecha</th><th>Descripción</th><th class="num">Monto</th></tr></thead>
+      <tbody>
+        {% for g in mayores %}
+        <tr><td>{{ g.fecha|fecha_es }}</td><td>{{ g.descripcion }}</td><td class="num">{{ g.monto|moneda }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Detalle completo</h2>
+  <table>
+    <thead><tr><th>#</th><th>Fecha</th><th>Descripción</th><th class="num">Monto</th></tr></thead>
+    <tbody>
+      {% for g in detalle %}
+      <tr><td>{{ loop.index }}</td><td>{{ g.fecha|fecha_es }}</td><td>{{ g.descripcion }}</td><td class="num">{{ g.monto|moneda }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="3">TOTAL</td><td class="num">{{ resumen.total|moneda }}</td></tr></tfoot>
+  </table>
+</section>
+{% else %}
+<section class="card"><p class="empty">No hay datos para el periodo seleccionado.</p></section>
+{% endif %}
+{% endblock %}
